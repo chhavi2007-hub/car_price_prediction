@@ -57,7 +57,6 @@ def api_predict(payload: dict) -> dict | None:
         # Log error cleanly or let caller handle UI display
         print(f"Prediction error: {e}")
         return None
-d
 
 
 def api_metrics() -> dict:
