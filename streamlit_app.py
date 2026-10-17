@@ -32,17 +32,32 @@ st.set_page_config(
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
+
 def api_predict(payload: dict) -> dict | None:
+    """
+    Runs local prediction on the payload dictionary.
+    Assumes `model` is a pre-fitted sklearn Pipeline or Estimator.
+    """
     try:
-        r = requests.post(f"{API_BASE}/predict", json=payload, timeout=5)
-        r.raise_for_status()
-        return r.json()
-    except requests.exceptions.ConnectionError:
-        st.error("❌ Cannot reach Flask backend. Run  `python app.py`  in a separate terminal.")
-        return None
+        # Convert dictionary to single-row DataFrame
+        input_data = pd.DataFrame([payload])
+        
+        # Make prediction (returns 1D numpy array)
+        raw_prediction = float(model.predict(input_data)[0])
+        
+        # Guard against non-sensical negative predictions
+        predicted_price = max(0.0, raw_prediction)
+
+        return {
+            "predicted_price_inr": round(predicted_price, 2),
+            "predicted_price_lakh": round(predicted_price / 100000, 2)
+        }
+
     except Exception as e:
-        st.error(f"API error: {e}")
+        # Log error cleanly or let caller handle UI display
+        print(f"Prediction error: {e}")
         return None
+d
 
 
 def api_metrics() -> dict:
